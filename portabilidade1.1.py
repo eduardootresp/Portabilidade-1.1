@@ -91,7 +91,7 @@ def gerar_planilha_excel(emprestimos):
     # Mostrar prévia dos dados da planilha
     try:
         df = pd.read_excel(caminho, sheet_name="Empréstimos")
-        df = df.dropna(how='all')  # 👈 remove linhas totalmente vazias
+        df = df.dropna(how='all')  # remove linhas totalmente vazias
         print("\n Prévia dos dados salvos:")
         print(df.head(10))  # Mostra as 10 primeiras linhas
     except Exception as e:
@@ -102,7 +102,7 @@ def gerar_planilha_excel(emprestimos):
 def main():
     emprestimos = []
     print("=== Sistema de Cálculo de Empréstimos ===")
-    print("=== Criado por Eduardo #143217 ===")
+    print("=== Criado por Eduardo ===")
 
     while True:
         print("\nMenu:")
