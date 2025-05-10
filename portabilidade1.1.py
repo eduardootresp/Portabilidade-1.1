@@ -4,12 +4,15 @@ import os
 import pandas as pd
 from decimal import Decimal, InvalidOperation
 
+# Calcula a prestação atual
 def calcular_prestacao(pv, i, n):
     pv = Decimal(pv)
     i = Decimal(i)
     n = Decimal(n)
     return (pv * i) / (1 - (1 + i) ** -n)
 
+
+# Valida as  entradas do usuário
 def input_validado(mensagem, tipo=float):
     while True:
         entrada = input(mensagem).strip()
@@ -23,8 +26,10 @@ def input_validado(mensagem, tipo=float):
             return tipo(entrada)
         except (ValueError, InvalidOperation):
             tipo_nome = "número inteiro" if tipo == int else "número decimal"
-            print(f"⚠️ Entrada inválida. Digite um {tipo_nome} válido.")
+            print(f"Entrada inválida. Digite um {tipo_nome} válido.")
 
+
+# Função para cadastrar o novo empréstimo
 def cadastrar_emprestimo():
     nome = input("Nome do cliente: ")
     saldo = input_validado("Saldo devedor (R$): ", Decimal)
@@ -48,6 +53,8 @@ def cadastrar_emprestimo():
         "nova_taxa_juros_mensal": nova_taxa,
     }
 
+
+# Cria uma planilha do excel
 def gerar_planilha_excel(emprestimos):
     wb = Workbook()
     ws = wb.active
@@ -79,18 +86,19 @@ def gerar_planilha_excel(emprestimos):
 
     wb.save("emprestimos.xlsx")
     caminho = os.path.abspath("emprestimos.xlsx")
-    print(f"\n📁 Arquivo 'emprestimos.xlsx' gerado com sucesso em:\n{caminho}")
+    print(f"\nArquivo 'emprestimos.xlsx' gerado com sucesso em:\n{caminho}")
 
     # Mostrar prévia dos dados da planilha
     try:
         df = pd.read_excel(caminho, sheet_name="Empréstimos")
         df = df.dropna(how='all')  # 👈 remove linhas totalmente vazias
-        print("\n📋 Prévia dos dados salvos:")
+        print("\n Prévia dos dados salvos:")
         print(df.head(10))  # Mostra as 10 primeiras linhas
     except Exception as e:
-        print(f"⚠️ Não foi possível mostrar a prévia: {e}")
+        print(f"Não foi possível mostrar a prévia: {e}")
 
 
+# Menu principal
 def main():
     emprestimos = []
     print("=== Sistema de Cálculo de Empréstimos ===")
@@ -112,14 +120,14 @@ def main():
             if emprestimos:
                 gerar_planilha_excel(emprestimos)
             else:
-                print("⚠️ Nenhum empréstimo cadastrado ainda.")
+                print("Nenhum empréstimo cadastrado ainda.")
 
         elif escolha == "3":
             print("Encerrando o programa. Até logo!")
             break
 
         else:
-            print("⚠️ Opção inválida. Tente novamente.")
+            print("Opção inválida. Tente novamente.")
 
 if __name__ == "__main__":
     main()
