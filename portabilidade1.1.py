@@ -1,41 +1,43 @@
 from openpyxl import Workbook
 from scipy.optimize import fsolve
 import os
+import pandas as pd
+from decimal import Decimal, InvalidOperation
 
-"""Função para calcular o valor da parcela com a nova taxa."""
 def calcular_prestacao(pv, i, n):
+    pv = Decimal(pv)
+    i = Decimal(i)
+    n = Decimal(n)
     return (pv * i) / (1 - (1 + i) ** -n)
 
-
-'''Função para validar o input do usuário.'''
 def input_validado(mensagem, tipo=float):
     while True:
         entrada = input(mensagem).strip()
 
-        if tipo == float:
+        if tipo in [float, Decimal]:
             entrada = entrada.replace(",", ".")
 
         try:
+            if tipo == Decimal:
+                return Decimal(entrada)
             return tipo(entrada)
-        except ValueError:
+        except (ValueError, InvalidOperation):
             tipo_nome = "número inteiro" if tipo == int else "número decimal"
-            print(f"Entrada inválida. Digite um {tipo_nome} válido.")
+            print(f"⚠️ Entrada inválida. Digite um {tipo_nome} válido.")
 
-
-'''Função para cadastrar o empréstimo atual.'''
 def cadastrar_emprestimo():
     nome = input("Nome do cliente: ")
-    saldo = input_validado("Saldo devedor (R$): ", float)
+    saldo = input_validado("Saldo devedor (R$): ", Decimal)
     meses = input_validado("Parcelas restantes: ", int)
-    prestacao_atual = input_validado("Valor da prestação atual (R$): ", float)
+    prestacao_atual = input_validado("Valor da prestação atual (R$): ", Decimal)
 
     # Resolver taxa de juros com fsolve
     def equacao(i):
-        return prestacao_atual - (saldo * i) / (1 - (1 + i)**-meses)
+        return float(prestacao_atual) - (float(saldo) * i) / (1 - (1 + i)**-meses)
 
     estimativa_inicial = 0.01
     atual_taxa = fsolve(equacao, estimativa_inicial)[0]
-    nova_taxa = input_validado("Nova taxa de juros mensal (%): ", float) / 100
+    nova_taxa = input_validado("Nova taxa de juros mensal (%): ", Decimal) / Decimal("100")
 
     return {
         "nome": nome,
@@ -46,8 +48,6 @@ def cadastrar_emprestimo():
         "nova_taxa_juros_mensal": nova_taxa,
     }
 
-
-'''Cria as planilhas com os dados do usuário.'''
 def gerar_planilha_excel(emprestimos):
     wb = Workbook()
     ws = wb.active
@@ -77,52 +77,24 @@ def gerar_planilha_excel(emprestimos):
             round(nova_prestacao, 2)
         ])
 
-    # mostra onde foi salvo o arquivo
     wb.save("emprestimos.xlsx")
     caminho = os.path.abspath("emprestimos.xlsx")
-    print(f"\n Arquivo 'emprestimos.xlsx' gerado com sucesso em:\n{caminho}")
+    print(f"\n📁 Arquivo 'emprestimos.xlsx' gerado com sucesso em:\n{caminho}")
 
     # Mostrar prévia dos dados da planilha
-    from openpyxl import load_workbook
-
-    # ...
-
     try:
-        wb = load_workbook(caminho)
-        ws = wb["Empréstimos"]
-
-        print("\n Prévia dos dados salvos:")
-
-        linha_vazia = False
-        contador = 0
-
-        for row in ws.iter_rows(values_only=True):
-            if all(cell is None for cell in row):
-                linha_vazia = True
-                continue
-
-            # Formatar e alinhar cada célula
-            linha_formatada = " | ".join(
-                str(cell).ljust(30) if cell is not None else "".ljust(30)
-                for cell in row
-            )
-
-            print(linha_formatada)
-            contador += 1
-            if contador >= 10:
-                break
-
-        if linha_vazia:
-            print("(Linhas vazias foram ignoradas)")
+        df = pd.read_excel(caminho, sheet_name="Empréstimos")
+        df = df.dropna(how='all')  # 👈 remove linhas totalmente vazias
+        print("\n📋 Prévia dos dados salvos:")
+        print(df.head(10))  # Mostra as 10 primeiras linhas
     except Exception as e:
-        print(f"Não foi possível mostrar a prévia: {e}")
+        print(f"⚠️ Não foi possível mostrar a prévia: {e}")
 
 
-'''Faz o menu principal.'''
 def main():
     emprestimos = []
     print("=== Sistema de Cálculo de Empréstimos ===")
-    print("=== Criado por Eduardo #https://github.com/eduardootresp ===")
+    print("=== Criado por Eduardo #143217 ===")
 
     while True:
         print("\nMenu:")
@@ -140,23 +112,14 @@ def main():
             if emprestimos:
                 gerar_planilha_excel(emprestimos)
             else:
-                print("Nenhum empréstimo cadastrado ainda.")
+                print("⚠️ Nenhum empréstimo cadastrado ainda.")
 
         elif escolha == "3":
             print("Encerrando o programa. Até logo!")
             break
 
         else:
-            print("Opção inválida. Tente novamente.")
-
-    # Esta linha mantém o terminal aberto até o usuário pressionar Enter
-    input("\nPressione Enter para sair...")
-
+            print("⚠️ Opção inválida. Tente novamente.")
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        print(f"\n Ocorreu um erro inesperado: {e}")
-        input("\nPressione Enter para sair...")
-
+    main()
